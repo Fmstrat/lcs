@@ -1,0 +1,25 @@
+version: '2.1'
+
+services:
+
+  lcs:
+    image: nowsci/lcs
+    container_name: lcs
+    environment:
+      LOCAL_URL: https://lemmy.domain.ext
+      LOCAL_USERNAME: user
+      LOCAL_PASSWORD: password
+      REMOTE_INSTANCES: '[
+        "lemmy.world",
+        "lemmy.ml",
+        "sh.itjust.works",
+        "lemmy.one" ]'
+      POST_COUNT: 50
+      COMMUNITY_COUNT: 20
+      COMMUNITY_SORT_METHODS: '[
+        "TopAll",
+        "TopDay" ]'
+      COMMUNITY_TYPE: All
+      SECONDS_AFTER_COMMUNITY_ADD: 17
+      MINUTES_BETWEEN_RUNS: 1440
+    restart: unless-stopped
