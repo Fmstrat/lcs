@@ -35,16 +35,20 @@ async function check(localClient, user, items) {
       } catch (e) {
         console.log(`Searched for community ${community}: ${e}`);
       }
-      if (!existingCommunity) {
-        let newCommunity = await localClient.resolveObject({
-          q: item.community.actor_id,
-          auth: user.jwt,
-        });
-        console.log(`Added community ${community}: ${newCommunity.community.community.id}`);
-        console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
-        await sleep(secondsAfterCommunityAdd);
+      try {
+        if (!existingCommunity) {
+          let newCommunity = await localClient.resolveObject({
+            q: item.community.actor_id,
+            auth: user.jwt,
+          });
+          console.log(`Added community ${community}: ${newCommunity.community.community.id}`);
+          console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
+          await sleep(secondsAfterCommunityAdd);
+        }
+        searched.push(`${community}`)
+      } catch (e) {
+        console.log(`Couldn't add community ${community}: ${e}`);
       }
-      searched.push(`${community}`)
     }
   }
 }

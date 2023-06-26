@@ -17,18 +17,19 @@ services:
       LOCAL_USERNAME: user
       LOCAL_PASSWORD: password
       REMOTE_INSTANCES: '[
+        "beehaw.org",
         "lemmy.world",
         "lemmy.ml",
         "sh.itjust.works",
         "lemmy.one" ]'
       POST_COUNT: 50
-      COMMUNITY_COUNT: 20
+      COMMUNITY_COUNT: 50
       COMMUNITY_SORT_METHODS: '[
         "TopAll",
         "TopDay" ]'
       COMMUNITY_TYPE: All
       SECONDS_AFTER_COMMUNITY_ADD: 17
-      MINUTES_BETWEEN_RUNS: 1440
+      MINUTES_BETWEEN_RUNS: 240
     restart: unless-stopped
 ```
 
@@ -38,13 +39,13 @@ cd src
 export LOCAL_URL=https://lemmy.domain.ext
 export LOCAL_USERNAME=user
 export LOCAL_PASSWORD=password
-export REMOTE_INSTANCES='["lemmy.world","lemmy.ml","sh.itjust.works","lemmy.one"]'
+export REMOTE_INSTANCES='["beehaw.org","lemmy.world","lemmy.ml","sh.itjust.works","lemmy.one"]'
 export POST_COUNT=50
-export COMMUNITY_COUNT=20
+export COMMUNITY_COUNT=50
 export COMMUNITY_SORT_METHODS='["TopAll","TopDay"]'
 export COMMUNITY_TYPE=All
 export SECONDS_AFTER_COMMUNITY_ADD=17
-export MINUTES_BETWEEN_RUNS=1440
+export MINUTES_BETWEEN_RUNS=240
 npm install
 npm start
 ```
