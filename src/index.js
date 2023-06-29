@@ -44,6 +44,12 @@ async function check(localClient, user, items) {
           console.log(`Added community ${community}: ${newCommunity.community.community.id}`);
           console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
           await sleep(secondsAfterCommunityAdd);
+          await localClient.followCommunity({
+            community_id: newCommunity.community.community.id,
+            follow: true,
+            auth: user.jwt,
+          });
+          console.log(`Followed community ${community}: ${newCommunity.community.community.id}`);
         }
         searched.push(`${community}`)
       } catch (e) {
