@@ -13,6 +13,7 @@ const communityCount = parseInt(process.env.COMMUNITY_COUNT);
 // https://join-lemmy.org/docs/users/03-votes-and-ranking.html
 const communitySortMethods = JSON.parse(process.env.COMMUNITY_SORT_METHODS);
 const communityType = process.env.COMMUNITY_TYPE;
+const ignore = process.env.IGNORE ? JSON.parse(process.env.IGNORE) : [];
 const secondsAfterCommunityAdd = parseInt(process.env.SECONDS_AFTER_COMMUNITY_ADD);
 const minutesBetweenRuns = parseInt(process.env.MINUTES_BETWEEN_RUNS);
 
@@ -26,35 +27,39 @@ async function check(localClient, user, items) {
     let existingCommunity;
     const communityInstance = item.community.actor_id.split('/')[2];
     const community = `${item.community.name}@${communityInstance}`;
-    if (!searched.includes(community)) {
-      try {
-        existingCommunity = await localClient.getCommunity({
-          name: `${community}`,
-        });
-        console.log(`Searched for community ${community}: found`);
-      } catch (e) {
-        console.log(`Searched for community ${community}: ${e}`);
-      }
-      try {
-        if (!existingCommunity) {
-          let newCommunity = await localClient.resolveObject({
-            q: item.community.actor_id,
-            auth: user.jwt,
+    if (!ignore.some(v => community.includes(v))) {
+      if (!searched.includes(community)) {
+        try {
+          existingCommunity = await localClient.getCommunity({
+            name: `${community}`,
           });
-          console.log(`Added community ${community}: ${newCommunity.community.community.id}`);
-          console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
-          await sleep(secondsAfterCommunityAdd);
-          await localClient.followCommunity({
-            community_id: newCommunity.community.community.id,
-            follow: true,
-            auth: user.jwt,
-          });
-          console.log(`Followed community ${community}: ${newCommunity.community.community.id}`);
+          console.log(`Searched for community ${community}: found`);
+        } catch (e) {
+          console.log(`Searched for community ${community}: ${e}`);
         }
-        searched.push(`${community}`)
-      } catch (e) {
-        console.log(`Couldn't add community ${community}: ${e}`);
+        try {
+          if (!existingCommunity) {
+            let newCommunity = await localClient.resolveObject({
+              q: item.community.actor_id,
+              auth: user.jwt,
+            });
+            console.log(`Added community ${community}: ${newCommunity.community.community.id}`);
+            console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
+            await sleep(secondsAfterCommunityAdd);
+            await localClient.followCommunity({
+              community_id: newCommunity.community.community.id,
+              follow: true,
+              auth: user.jwt,
+            });
+            console.log(`Followed community ${community}: ${newCommunity.community.community.id}`);
+          }
+          searched.push(`${community}`)
+        } catch (e) {
+          console.log(`Couldn't add community ${community}: ${e}`);
+        }
       }
+    } else {
+      console.log(`Ignoring community ${community}`);
     }
   }
 }

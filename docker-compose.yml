@@ -20,6 +20,8 @@ services:
         "TopAll",
         "TopDay" ]'
       COMMUNITY_TYPE: All
+      IGNORE: '[
+        "feddit.de" ]'
       SECONDS_AFTER_COMMUNITY_ADD: 17
       MINUTES_BETWEEN_RUNS: 1440
     restart: unless-stopped
