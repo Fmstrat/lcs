@@ -29,9 +29,11 @@ services:
         "TopDay" ]'
       COMMUNITY_TYPE: All
       IGNORE: '[
-        "feddit.de" ]'
+        "feddit.de",
+        "feddit.nl" ]'
       SECONDS_AFTER_COMMUNITY_ADD: 17
       MINUTES_BETWEEN_RUNS: 240
+      NSFW: false
     restart: unless-stopped
 ```
 
@@ -46,9 +48,10 @@ export POST_COUNT=50
 export COMMUNITY_COUNT=50
 export COMMUNITY_SORT_METHODS='["TopAll","TopDay"]'
 export COMMUNITY_TYPE=All
-export IGNORE='["feddit.de"]'
+export IGNORE='["feddit.de", "feddit.nl"]'
 export SECONDS_AFTER_COMMUNITY_ADD=17
 export MINUTES_BETWEEN_RUNS=240
+export NSFW=false
 npm install
 npm start
 ```
@@ -68,3 +71,4 @@ npm start
 |IGNORE|If a string exists in the community name, it will be ignored|
 |SECONDS_AFTER_COMMUNITY_ADD|How long to sleep after adding a new community to your instance|
 |MINUTES_BETWEEN_RUNS|How long to wait between runs|
+|NSFW|To add or not to add NSFW communities|
