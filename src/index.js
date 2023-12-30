@@ -33,6 +33,7 @@ async function check(localClient, user, items) {
           let existingCommunity;
           const communityInstance = item.community.actor_id.split("/")[2];
           const community = `${item.community.name}@${communityInstance}`;
+
           if (!ignore.some((v) => community.includes(v))) {
             if (!searched.includes(community)) {
               try {
@@ -43,18 +44,18 @@ async function check(localClient, user, items) {
               } catch (e) {
                 console.log(`Searched for community ${community}: ${e}`);
               }
+
               try {
+                // If the community is not found on the local instance add it and follow it
                 if (!existingCommunity) {
                   let newCommunity = await localClient.resolveObject({
                     q: item.community.actor_id,
                     auth: user.jwt,
                   });
-
-                  // If the community is found on the local instance
-
                   console.log(
                     `Added community ${community}: ${newCommunity.community.community.id}`
                   );
+
                   console.log(`Sleeping ${secondsAfterCommunityAdd} seconds`);
                   await sleep(secondsAfterCommunityAdd);
 
@@ -85,6 +86,7 @@ async function check(localClient, user, items) {
 async function subscribeAll(localClient, user) {
   let page = 0;
   let loops = 0;
+
   while (loops < 500) {
     try {
       let response = await localClient.listCommunities({
@@ -94,9 +96,11 @@ async function subscribeAll(localClient, user) {
         limit: 50,
         auth: user.jwt,
       });
+
       if (!response.communities || response.communities.length == 0) {
         break;
       }
+
       for await (const c of response.communities) {
         if (
           c.subscribed == "NotSubscribed" &&
@@ -110,23 +114,25 @@ async function subscribeAll(localClient, user) {
               community_id: c.community.id,
               follow: true,
             });
-            // } else {
-            //console.log(`Already subscribed to ${c.community.actor_id}`);
+          } else {
+            console.log(`Already subscribed to ${c.community.actor_id}`);
           }
         }
+
         if (
           c.subscribed != "NotSubscribed" &&
           (c.blocked || c.community.removed || c.community.deleted)
         ) {
-          //console.log(`Unsubscribing from ${c.community.actor_id}`);
+          console.log(`Unsubscribing from ${c.community.actor_id}`);
           await localClient.followCommunity({
             community_id: c.community.id,
             follow: false,
             auth: user.jwt,
           });
         }
+
         if (c.subscribed != "NotSubscribed" && !nsfw && c.community.nsfw) {
-          //console.log(`Unsubscribing from ${c.community.actor_id}`);
+          console.log(`Unsubscribing from ${c.community.actor_id}`);
           await localClient.followCommunity({
             community_id: c.community.id,
             follow: false,
@@ -152,13 +158,15 @@ async function main() {
       };
       let user = await localClient.login(loginForm);
       localClient.setHeaders({ Authorization: "Bearer " + user.jwt });
+
       for await (const remoteInstance of remoteInstances) {
         try {
           for await (const communitySortMethod of communitySortMethods) {
             let remoteClient = new LemmyHttp(`https://${remoteInstance}`);
-            //console.log(
-            //   `Checking ${remoteInstance} for posts of ${communitySortMethod}`
-            // );
+            console.log(
+              `Checking ${remoteInstance} for posts of ${communitySortMethod}`
+            );
+
             let response = await remoteClient.getPosts({
               type_: communityType,
               sort: communitySortMethod,
@@ -166,19 +174,19 @@ async function main() {
               limit: postCount,
             });
 
-            //console.log("Response from remote instance:", response);
+            console.log("Response from remote instance:", response);
 
             await check(localClient, user, response.posts);
-            //console.log(
-            //   `Checking ${remoteInstance} for communities of ${communitySortMethod}`
-            // );
+            console.log(
+              `Checking ${remoteInstance} for communities of ${communitySortMethod}`
+            );
             response = await remoteClient.listCommunities({
               type_: communityType,
               sort: communitySortMethod,
               limit: communityCount,
             });
 
-            //console.log("Response from communities:", response);
+            console.log("Response from communities:", response);
 
             await check(localClient, user, response.communities);
           }
