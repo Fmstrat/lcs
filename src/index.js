@@ -174,8 +174,6 @@ async function main() {
               limit: postCount,
             });
 
-            console.log("Response from remote instance:", response);
-
             await check(localClient, user, response.posts);
             console.log(
               `Checking ${remoteInstance} for communities of ${communitySortMethod}`
