@@ -157,8 +157,8 @@ async function main() {
         password: localPassword,
       };
       let user = await localClient.login(loginForm);
-      localClient.setHeaders({ Authorization: "Bearer " + user.jwt });
 
+      localClient.setHeaders({Authorization: "Bearer " + user.jwt});
       for await (const remoteInstance of remoteInstances) {
         try {
           for await (const communitySortMethod of communitySortMethods) {
