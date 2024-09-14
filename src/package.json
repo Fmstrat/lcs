@@ -5,11 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start-dev": "node_modules/.bin/nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lemmy-js-client": "^0.18.0"
+    "lemmy-js-client": "^0.20.0-alpha.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
