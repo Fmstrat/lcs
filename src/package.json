@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "lemmy-js-client": "^0.20.0-alpha.4"
+    "lemmy-js-client": "0.19.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

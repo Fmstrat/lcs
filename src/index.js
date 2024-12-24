@@ -14,6 +14,7 @@ const communityCount = parseInt(process.env.COMMUNITY_COUNT);
 const communitySortMethods = JSON.parse(process.env.COMMUNITY_SORT_METHODS);
 const communityType = process.env.COMMUNITY_TYPE;
 const ignore = process.env.IGNORE ? JSON.parse(process.env.IGNORE) : [];
+const unsubscribe = process.env.UNSUBSCRIBE ? JSON.parse(process.env.UNSUBSCRIBE) : [];
 const secondsAfterCommunityAdd = parseInt(
   process.env.SECONDS_AFTER_COMMUNITY_ADD
 );
@@ -103,6 +104,7 @@ async function subscribeAll(localClient, user) {
 
       for await (const c of response.communities) {
         if (
+          !unsubscribe &&
           c.subscribed == "NotSubscribed" &&
           !c.blocked &&
           !c.community.removed &&
@@ -121,7 +123,11 @@ async function subscribeAll(localClient, user) {
 
         if (
           c.subscribed != "NotSubscribed" &&
-          (c.blocked || c.community.removed || c.community.deleted)
+          (
+            unsubscribe
+            || (c.blocked || c.community.removed || c.community.deleted)
+            || (!nsfw && c.community.nsfw)
+          )
         ) {
           console.log(`Unsubscribing from ${c.community.actor_id}`);
           await localClient.followCommunity({
@@ -129,15 +135,7 @@ async function subscribeAll(localClient, user) {
             follow: false,
             auth: user.jwt,
           });
-        }
-
-        if (c.subscribed != "NotSubscribed" && !nsfw && c.community.nsfw) {
-          console.log(`Unsubscribing from ${c.community.actor_id}`);
-          await localClient.followCommunity({
-            community_id: c.community.id,
-            follow: false,
-            auth: user.jwt,
-          });
+          await sleep(3);
         }
       }
     } catch (e) {
@@ -151,40 +149,42 @@ async function subscribeAll(localClient, user) {
 async function main() {
   while (true) {
     try {
-      let localClient = new LemmyHttp(localUrl);
+      let localClient = new LemmyHttp('https://lemmy.nowsci.com');
       let loginForm = {
         username_or_email: localUsername,
         password: localPassword,
       };
       let user = await localClient.login(loginForm);
-      localClient.setHeaders({Authorization: "Bearer " + user.jwt});
-      for await (const remoteInstance of remoteInstances) {
-        try {
-          for await (const communitySortMethod of communitySortMethods) {
-            let remoteClient = new LemmyHttp(`https://${remoteInstance}`);
+      localClient.setHeaders({ Authorization: "Bearer " + user.jwt });
+      if (!unsubscribe) {
+        for await (const remoteInstance of remoteInstances) {
+          try {
+            for await (const communitySortMethod of communitySortMethods) {
+              let remoteClient = new LemmyHttp(`https://${remoteInstance}`);
 
-            console.log(
-              `Checking ${remoteInstance} for posts of ${communitySortMethod}`
-            );
-            let response = await remoteClient.getPosts({
-              type_: communityType,
-              sort: communitySortMethod,
-              limit: postCount,
-            });
-            await check(localClient, user, response.posts);
+              console.log(
+                `Checking ${remoteInstance} for posts of ${communitySortMethod}`
+              );
+              let response = await remoteClient.getPosts({
+                type_: communityType,
+                sort: communitySortMethod,
+                limit: postCount,
+              });
+              await check(localClient, user, response.posts);
 
-            console.log(
-              `Checking ${remoteInstance} for communities of ${communitySortMethod}`
-            );
-            response = await remoteClient.listCommunities({
-              type_: communityType,
-              sort: communitySortMethod,
-              limit: communityCount,
-            });
-            await check(localClient, user, response.communities);
+              console.log(
+                `Checking ${remoteInstance} for communities of ${communitySortMethod}`
+              );
+              response = await remoteClient.listCommunities({
+                type_: communityType,
+                sort: communitySortMethod,
+                limit: communityCount,
+              });
+              await check(localClient, user, response.communities);
+            }
+          } catch (e) {
+            console.log(e);
           }
-        } catch (e) {
-          console.log(e);
         }
       }
       await subscribeAll(localClient, user);
