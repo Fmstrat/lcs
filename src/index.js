@@ -1,8 +1,12 @@
 const { LemmyHttp } = require("lemmy-js-client");
+const fs = require('fs').promises;
 
 const localUrl = process.env.LOCAL_URL;
 const localUsername = process.env.LOCAL_USERNAME;
 const localPassword = process.env.LOCAL_PASSWORD;
+
+const trackerFile = process.env.TRACKER_FILE ? process.env.TRACKER_FILE : null;
+let trackerCommunities = [];
 
 // List from https://github.com/maltfield/awesome-lemmy-instances
 const remoteInstances = JSON.parse(process.env.REMOTE_INSTANCES);
@@ -47,6 +51,7 @@ async function check(localClient, user, items) {
               }
 
               try {
+
                 // If the community is not found on the local instance add it and follow it
                 if (!existingCommunity) {
                   let newCommunity = await localClient.resolveObject({
@@ -68,6 +73,13 @@ async function check(localClient, user, items) {
                     `Followed community ${community}: ${newCommunity.community.community.id}`
                   );
                 }
+
+                if (trackerFile && !trackerCommunities.includes(community)) {
+                  console.log(`Adding community ${community} to trackerment file`);
+                  await fs.appendFile(trackerFile, `[${new Date().toISOString()}] ${community}\n`);
+                  trackerCommunities.push(community);
+                }
+
                 searched.push(`${community}`);
               } catch (e) {
                 console.log(`Couldn't add community ${community}: ${e}`);
@@ -147,6 +159,18 @@ async function subscribeAll(localClient, user) {
 }
 
 async function main() {
+  if (trackerFile) {
+    try {
+      const fileContent = await fs.readFile(trackerFile, 'utf8');
+      const trackerCommunitiesWithDate = fileContent.split('\n');
+      trackerCommunities = trackerCommunitiesWithDate
+        .map(item => item.split(' ')[1])
+        .filter(item => item !== undefined);
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+    console.log(`${trackerCommunities.length} communities already tracked`);
+  }
   while (true) {
     try {
       let localClient = new LemmyHttp('https://lemmy.nowsci.com');
@@ -156,7 +180,7 @@ async function main() {
       };
       let user = await localClient.login(loginForm);
       localClient.setHeaders({ Authorization: "Bearer " + user.jwt });
-      if (!unsubscribe) {
+      if (trackerFile || (!trackerFile && !unsubscribe)) {
         for await (const remoteInstance of remoteInstances) {
           try {
             for await (const communitySortMethod of communitySortMethods) {
