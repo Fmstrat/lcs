@@ -173,7 +173,7 @@ async function main() {
   }
   while (true) {
     try {
-      let localClient = new LemmyHttp('https://lemmy.nowsci.com');
+      let localClient = new LemmyHttp(localUrl);
       let loginForm = {
         username_or_email: localUsername,
         password: localPassword,
