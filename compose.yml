@@ -1,7 +1,5 @@
-version: '2.1'
-
+name: Lemmy community seeder
 services:
-
   lcs:
     image: nowsci/lcs
     container_name: lcs
@@ -24,4 +22,7 @@ services:
         "feddit.de" ]'
       SECONDS_AFTER_COMMUNITY_ADD: 17
       MINUTES_BETWEEN_RUNS: 1440
+      TRACKER_FILE: /app/logs/tracker.json
+    volumes:
+      - ./logs:/app/logs
     restart: unless-stopped
