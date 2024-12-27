@@ -29,6 +29,19 @@ function sleep(s) {
   return new Promise((resolve) => setTimeout(resolve, s * 1000));
 }
 
+async function trackerAccessible()  {
+  try {
+    const path = trackerFile.split("/").slice(0, -1).join("/");
+    await fs.mkdir(path, { recursive: true });
+    if (!await fs.access(trackerFile), fs.constants.W_OK) {
+      await fs.writeFile(trackerFile, '');
+    }
+    return true;
+  } catch (e) {
+    return false;
+  };
+};
+
 async function check(localClient, user, items) {
   const searched = [];
   for await (const item of items) {
@@ -74,7 +87,7 @@ async function check(localClient, user, items) {
                   );
                 }
 
-                if (trackerFile && !trackerCommunities.includes(community)) {
+                if (trackerFile && await trackerAccessible() && !trackerCommunities.includes(community)) {
                   console.log(`Adding community ${community} to trackerment file`);
                   await fs.appendFile(trackerFile, `[${new Date().toISOString()}] ${community}\n`);
                   trackerCommunities.push(community);
@@ -159,7 +172,9 @@ async function subscribeAll(localClient, user) {
 }
 
 async function main() {
-  if (trackerFile) {
+  if (trackerFile && ! await trackerAccessible()) {
+    console.error(`Tracker file path provided (${trackerFile}), but it is not accessible for user 1000`);
+  } else if (trackerFile && await trackerAccessible()) {
     try {
       const fileContent = await fs.readFile(trackerFile, 'utf8');
       const trackerCommunitiesWithDate = fileContent.split('\n');
